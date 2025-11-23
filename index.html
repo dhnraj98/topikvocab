@@ -1,24 +1,349 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Korean Vocabulary</title>
-  <link rel="stylesheet" href="vocab.css" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Flashcard Slider</title>
+<style>
+/* --- Reset & Body --- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Arial', sans-serif;
+  background: #eef2ff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* --- Heading --- */
+h2 {
+  color: #333;
+  margin-bottom: 25px;
+  text-align: center;
+  font-size: 1.8rem;
+}
+
+/* --- Dropdown --- */
+.custom-select {
+  width: 100%;
+  max-width: 300px;
+  margin-bottom: 20px;
+}
+.custom-select select {
+  width: 100%;
+  padding: 10px 40px 10px 15px;
+  font-size: 16px;
+  border: 2px solid #4f46e5;
+  border-radius: 8px;
+  appearance: none;
+  background: white url('data:image/svg+xml;utf8,<svg fill="%234f46e5" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>') no-repeat right 10px center;
+  cursor: pointer;
+  color: #333;
+}
+
+/* --- Checkbox --- */
+.custom-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 25px;
+  cursor: pointer;
+  font-size: 16px;
+}
+.custom-checkbox input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #4f46e5;
+  border-radius: 4px;
+  cursor: pointer;
+  appearance: none;
+  transition: background 0.2s;
+}
+.custom-checkbox input[type="checkbox"]:checked {
+  background: #4f46e5 url('data:image/svg+xml;utf8,<svg fill="white" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M20 6L9 17l-5-5"/></svg>') center/70% no-repeat;
+  border-color: #4f46e5;
+}
+
+/* --- Slider / Flashcard Section --- */
+.slider {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  margin-bottom: 25px;
+}
+
+.slider button {
+  min-width: 50px;
+  height: 160px;
+  font-size: 24px;
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s background;
+}
+.slider button:hover { background: #3730a3; }
+
+.flashcard {
+  width: 260px;
+  max-width: 90vw;
+  height: 160px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+  perspective: 1000px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.inner {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.8s;
+  transform-style: preserve-3d;
+  position: relative;
+}
+
+.flipped { transform: rotateY(180deg); }
+
+.side {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+  word-wrap: break-word;
+}
+
+.front { background: #c6e6ff; }
+.back { background: #ffe8a6; transform: rotateY(180deg); }
+
+/* --- Pronounce & Search Buttons --- */
+button.speak {
+  margin-bottom: 25px;
+  padding: 10px 25px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+  background: #4f46e5;
+  color: white;
+  cursor: pointer;
+  transition: 0.2s background;
+}
+button.speak:hover { background: #3730a3; }
+
+/* --- Table --- */
+.table-container {
+  width: 100%;
+  max-width: 600px;
+  overflow-x: auto;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  margin-bottom: 15px;
+}
+th, td {
+  border: 1px solid #999;
+  padding: 8px;
+  text-align: center;
+}
+th { background: #4f46e5; color: white; }
+
+.table-controls {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+/* --- Table speaker buttons --- */
+table td button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s background;
+}
+
+table td button:hover {
+  background: #3730a3;
+}
+
+/* --- Table controls buttons (Prev/Next) --- */
+.table-controls button {
+  background: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 18px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s background;
+}
+
+.table-controls button:hover {
+  background: #3730a3;
+}
+/* --- Responsive --- */
+@media (max-width: 500px) {
+  .slider button { height: 120px; width: 40px; font-size: 20px; }
+  .flashcard { height: 120px; width: 200px; font-size: 18px; }
+  button.speak { padding: 8px 20px; font-size: 14px; }
+  h2 { font-size: 1.5rem; }
+  .custom-select select { font-size: 14px; padding: 8px 35px 8px 12px; }
+}
+</style>
 </head>
 <body>
-  <div class="day-selector-container">
-    <select id="day-select">
-      <!-- Days options will be generated by JS -->
-    </select>
+
+<h2>Flashcard Slider (Korean ↔ Nepali)</h2>
+
+<div class="custom-select">
+  <select id="listSelect" onchange="switchList()"></select>
+</div>
+
+<label class="custom-checkbox">
+  <input type="checkbox" id="reverseMode" onchange="loadCard()">
+  Show Nepali on front?
+</label>
+
+<div class="slider">
+  <button onclick="prevCard()">⬅</button>
+  <div class="flashcard" id="card">
+    <div class="inner" id="innerCard">
+      <div class="side front" id="frontText"></div>
+      <div class="side back" id="backText"></div>
+    </div>
   </div>
+  <button onclick="nextCard()">➡</button>
+</div>
 
-  <h1>Korean Vocabulary - Day <span id="day-number">1</span></h1>
-  <button id="tts-all">▶ Play All</button>
-  <div id="vocab-list"></div>
-  <div class="pagination" id="pagination"></div>
+<audio id="flipSound" src="https://www.fesliyanstudios.com/play-mp3/387" preload="auto"></audio>
+<button onclick="speakText()" class="speak">🔊 Pronounce</button>
 
-  <script src="vocab.js"></script>
-  <script src="script.js"></script>
+<div class="table-container">
+  <table id="vocabTable">
+    <thead>
+      <tr><th>#</th><th>Korean</th><th>Nepali</th><th>🔊</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="table-controls">
+  <button onclick="prevTable()">⬅ Prev</button>
+  <button onclick="nextTable()">Next ➡</button>
+</div>
+
+<button onclick="naverSearch()" class="speak">Search on Naver Dictionary</button>
+
+<script src="vocab1.js"></script>
+<script src="vocab2.js"></script>
+
+<script>
+const vocabLists = { listOne, listTwo };
+let cards = [];
+let index = 0;
+let tablePage = 0;
+const pageSize = 10;
+
+const frontText = document.getElementById('frontText');
+const backText = document.getElementById('backText');
+const inner = document.getElementById('innerCard');
+const sound = document.getElementById('flipSound');
+const tableBody = document.querySelector('#vocabTable tbody');
+const listSelect = document.getElementById('listSelect');
+
+// Populate dropdown
+for(const key in vocabLists){
+  const option = document.createElement('option');
+  option.value = key;
+  option.textContent = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+  listSelect.appendChild(option);
+}
+
+// Flashcard
+function loadCard() {
+  if(!cards.length) return;
+  inner.classList.remove('flipped');
+  const reverse = document.getElementById('reverseMode').checked;
+  frontText.textContent = reverse ? cards[index].back : cards[index].front;
+  backText.textContent = reverse ? cards[index].front : cards[index].back;
+}
+function nextCard(){ index = (index+1)%cards.length; loadCard(); }
+function prevCard(){ index = (index-1+cards.length)%cards.length; loadCard(); }
+
+function speakText(){
+  const text = inner.classList.contains('flipped') ? backText.textContent : frontText.textContent;
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = text.match(/[가-힣]/) ? 'ko-KR' : 'ne-NP';
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+inner.addEventListener('click', ()=>{
+  inner.classList.toggle('flipped');
+  sound.currentTime = 0;
+  sound.play();
+});
+
+// Table
+function loadTable(){
+  if(!cards.length) return;
+  tableBody.innerHTML = '';
+  const start = tablePage*pageSize;
+  const end = Math.min(start+pageSize, cards.length);
+  for(let i=start;i<end;i++){
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${i+1}</td>
+                     <td>${cards[i].front}</td>
+                     <td>${cards[i].back}</td>
+                     <td><button onclick="playSound(${i})">🔊</button></td>`;
+    tableBody.appendChild(row);
+  }
+}
+function nextTable(){ if((tablePage+1)*pageSize < cards.length) tablePage++; loadTable(); }
+function prevTable(){ if(tablePage>0) tablePage--; loadTable(); }
+function playSound(i){
+  const utter = new SpeechSynthesisUtterance(cards[i].front);
+  utter.lang='ko-KR';
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utter);
+}
+
+// Naver Search
+function naverSearch(){
+  const koreanWord = cards[index].front;
+  window.open(`https://ko.dict.naver.com/#/search?query=${encodeURIComponent(koreanWord)}`,'_blank');
+}
+
+// Switch list
+function switchList(){
+  const key = listSelect.value;
+  cards = vocabLists[key] ? [...vocabLists[key]] : [];
+  index = 0; tablePage = 0;
+  loadCard(); loadTable();
+}
+
+// Initialize
+window.onload = ()=>{ switchList(); };
+</script>
 </body>
 </html>
